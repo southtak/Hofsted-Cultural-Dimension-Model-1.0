@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hofstede 文化6次元ダッシュボード｜世界幸福度との相関・重回帰分析</title>
+<style>
+:root{
+  --ink:#1A2238; --ink2:#48506B; --paper:#F7F5F0; --panel:#FFFFFF;
+  --line:#E2DDD2; --line2:#D2CBBC; --soft:#FBFAF6;
+  --pdi:#B5495B; --idv:#2C6E9E; --mas:#C9881F; --uai:#6A5C92; --lto:#2C5F2D; --ivr:#C2603A;
+  --good:#2C5F2D; --bad:#B5495B;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",-apple-system,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;}
+.wrap{max-width:1140px;margin:0 auto;padding:0 22px 60px;}
+header.masthead{padding:38px 0 22px;border-bottom:2px solid var(--ink);}
+.eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink2);font-weight:700;}
+h1.title{font-family:Georgia,"Times New Roman",serif;font-weight:700;font-size:clamp(26px,4vw,40px);
+  line-height:1.12;margin:.28em 0 .15em;letter-spacing:-.01em;}
+h1.title .sub{display:block;font-size:.5em;color:var(--ink2);font-weight:400;font-style:italic;margin-top:.5em;}
+.byline{font-size:12.5px;color:var(--ink2);line-height:1.7;margin-top:14px;}
+.byline b{color:var(--ink);}
+nav.tabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line2);margin:28px 0 26px;}
+nav.tabs button{appearance:none;background:none;border:none;cursor:pointer;font-family:inherit;
+  font-size:14px;font-weight:600;color:var(--ink2);padding:13px 18px 12px;
+  border-bottom:3px solid transparent;margin-bottom:-1px;transition:.15s;}
+nav.tabs button:hover{color:var(--ink);}
+nav.tabs button.on{color:var(--ink);border-bottom-color:var(--mas);}
+nav.tabs button .n{font-family:Georgia,serif;font-style:italic;color:var(--line2);margin-right:7px;}
+nav.tabs button.on .n{color:var(--mas);}
+.view{display:none;animation:fade .35s ease;}.view.on{display:block;}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.lead{font-size:14px;color:var(--ink2);line-height:1.75;max-width:790px;margin:0 0 22px;}
+.lead b{color:var(--ink);}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:22px 24px;margin-bottom:20px;}
+.panel h2{font-family:Georgia,serif;font-size:18px;margin:0 0 4px;font-weight:700;letter-spacing:-.01em;}
+.panel .ph{font-size:12px;color:var(--ink2);margin:0 0 18px;}
+.controls{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-bottom:20px;}
+.field label{display:block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink2);font-weight:700;margin-bottom:5px;}
+select{font-family:inherit;font-size:14px;padding:9px 12px;border:1px solid var(--line2);border-radius:3px;background:var(--panel);color:var(--ink);min-width:175px;}
+.dimlegend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--ink2);}
+.dimlegend span{display:inline-flex;align-items:center;gap:6px;}
+.swatch{width:11px;height:11px;border-radius:2px;display:inline-block;}
+/* profile */
+.barrow{display:grid;grid-template-columns:172px 1fr;align-items:center;gap:14px;margin:14px 0;}
+.barrow .lbl{font-size:13px;}.barrow .lbl small{display:block;color:var(--ink2);font-size:10.5px;letter-spacing:.03em;}
+.grp{display:flex;flex-direction:column;gap:4px;}
+.gbar{display:grid;grid-template-columns:1fr 46px;align-items:center;gap:8px;}
+.track{height:16px;background:var(--soft);border:1px solid var(--line);border-radius:3px;overflow:hidden;}
+.fill{height:100%;transition:width .5s cubic-bezier(.2,.7,.2,1);}
+.gbar .gv{font-variant-numeric:tabular-nums;font-weight:700;font-size:12.5px;text-align:right;}
+.miss{color:#bdb6a6;font-style:italic;font-size:12px;}
+/* table */
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th,td{text-align:right;padding:8px 10px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;}
+th{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink2);font-weight:700;border-bottom:1.5px solid var(--line2);cursor:pointer;user-select:none;}
+th:first-child,td:first-child{text-align:left;}tbody tr:hover{background:var(--soft);}
+td.cty{font-weight:600;}
+.tablewrap{max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:4px;}
+.tablewrap table th{position:sticky;top:0;background:var(--panel);z-index:2;}
+/* checks */
+.checks{display:flex;flex-wrap:wrap;gap:10px;}
+.chk{display:flex;align-items:center;gap:8px;border:1px solid var(--line2);border-radius:30px;padding:8px 15px 8px 12px;cursor:pointer;font-size:13px;font-weight:600;user-select:none;transition:.15s;background:var(--panel);}
+.chk input{accent-color:var(--ink);width:15px;height:15px;}.chk .dot{width:10px;height:10px;border-radius:50%;}.chk.off{opacity:.5;}
+/* stats cards */
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-bottom:22px;}
+.stat{background:var(--panel);padding:16px 18px;}
+.stat .k{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);font-weight:700;}
+.stat .v{font-family:Georgia,serif;font-size:27px;font-weight:700;margin-top:5px;font-variant-numeric:tabular-nums;}
+.stat .v small{font-size:13px;color:var(--ink2);font-weight:400;font-family:inherit;}
+.sig{display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;vertical-align:middle;margin-left:5px;}
+.s3{background:#1d4f23;color:#fff}.s2{background:#3a7b41;color:#fff}.s1{background:#8aa06a;color:#fff}.s0{background:#E2DDD2;color:#6b6555}
+.posv{color:var(--good);font-weight:700}.negv{color:var(--bad);font-weight:700}.nsv{color:#9a9384}
+.vifwarn{color:var(--bad);font-weight:700}
+.note{font-size:12px;color:var(--ink2);line-height:1.7;background:var(--soft);border-left:3px solid var(--mas);padding:13px 16px;border-radius:0 4px 4px 0;}
+/* coef chart */
+.coefrow{display:grid;grid-template-columns:80px 1fr;align-items:center;gap:14px;margin:9px 0;font-size:13px;}
+.coefrow .cn{font-weight:700;}
+.coefbar{position:relative;height:30px;background:var(--soft);border:1px solid var(--line);border-radius:3px;}
+.coefbar .zero{position:absolute;top:0;bottom:0;left:50%;width:1px;background:var(--line2);}
+.coefbar .seg{position:absolute;top:4px;bottom:4px;border-radius:2px;}
+.coefbar .ci{position:absolute;top:50%;height:1px;background:var(--ink);opacity:.55;}
+.coefbar .tag{position:absolute;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;top:50%;transform:translateY(-50%);}
+/* corr matrix */
+.cmx{border-collapse:collapse;font-size:12.5px;margin-top:4px;}
+.cmx td,.cmx th{border:1px solid var(--line);text-align:center;padding:0;}
+.cmx th{background:var(--soft);font-weight:700;padding:7px 9px;color:var(--ink2);}
+.cmx .cell{width:64px;height:46px;font-variant-numeric:tabular-nums;font-weight:700;cursor:pointer;}
+.cmx .cell small{display:block;font-weight:400;font-size:9.5px;opacity:.7;}
+.cmx .diag{background:var(--ink);color:#fff;}
+.gridtwo{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
+@media(max-width:820px){.gridtwo{grid-template-columns:1fr;}}
+/* dimension explainer */
+.dimexp{margin-top:8px;}
+.dimcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden;}
+.dimcard{background:var(--panel);padding:16px 18px;}
+.dimcard .hd{display:flex;align-items:center;gap:9px;margin-bottom:7px;}
+.dimcard .badge{font-family:Georgia,serif;font-weight:700;font-size:13px;color:#fff;padding:3px 9px;border-radius:3px;letter-spacing:.02em;}
+.dimcard .nm{font-weight:700;font-size:14.5px;}.dimcard .en{font-size:11px;color:var(--ink2);font-style:italic;}
+.dimcard p{font-size:12.5px;color:var(--ink2);line-height:1.72;margin:0;}
+.dimcard .poles{display:flex;justify-content:space-between;font-size:11px;margin-top:9px;color:var(--ink);}
+.dimcard .poles b{font-weight:700;}.dimcard .poles .lo{color:var(--ink2);}
+.scattercap{font-size:12px;color:var(--ink2);margin-top:8px;text-align:center;}
+svg{max-width:100%;height:auto;}
+text{font-family:inherit;}
+footer{margin-top:36px;padding-top:22px;border-top:1px solid var(--line2);font-size:11.5px;color:var(--ink2);line-height:1.85;}
+footer a{color:var(--idv);}
+.cc{display:inline-block;border:1px solid var(--line2);border-radius:3px;padding:2px 8px;font-weight:700;font-size:11px;color:var(--ink);margin-right:6px;}
+.secttl{font-family:Georgia,serif;font-size:20px;font-weight:700;margin:40px 0 6px;letter-spacing:-.01em;}
+.sectsub{font-size:12.5px;color:var(--ink2);margin:0 0 16px;}
+@media(max-width:640px){.barrow{grid-template-columns:120px 1fr;}nav.tabs button{padding:11px 12px;font-size:13px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="masthead">
+  <div class="eyebrow">National Culture × Subjective Well-being</div>
+  <h1 class="title">ホフステードの文化6次元ダッシュボード
+    <span class="sub">— 各国・各地域の文化特性とウェルビーイングとの関係を考える —</span></h1>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-v="profile" class="on"><span class="n">01</span>国別プロファイル</button>
+  <button data-v="radar"><span class="n">02</span>レーダー比較</button>
+  <button data-v="rank"><span class="n">03</span>次元別ランキング</button>
+  <button data-v="corr"><span class="n">04</span>相関分析</button>
+  <button data-v="reg"><span class="n">05</span>応用：重回帰分析</button>
+  <button data-v="data"><span class="n">06</span>データ一覧</button>
+</nav>
+
+<!-- 01 PROFILE -->
+<section class="view on" id="v-profile">
+  <p class="lead">ホフステードの国民文化6次元を、最大<b>4カ国</b>まで重ねてスコア（0–100）で比較します。値が高いほどその次元の特性が強いことを示します。</p>
+  <div class="controls" id="profsel"></div>
+  <div class="panel"><h2>文化6次元プロファイル</h2><div class="ph" id="psub"></div>
+    <div id="pbars"></div>
+    <div class="dimlegend" id="plegend" style="margin-top:18px"></div></div>
+</section>
+
+<!-- 02 RADAR -->
+<section class="view" id="v-radar">
+  <p class="lead">最大4カ国を重ねて6次元の文化プロファイルを比較します。各系列は個別の国に加え、<b>地域平均</b>（地理区分）と<b>文化圏平均</b>（アングロサクソン・儒教・ラテン・地中海など）からも選べます。形状の違いが文化的距離を表します。</p>
+  <div class="controls" id="radarsel"></div>
+  <div class="panel"><h2>文化プロファイル・レーダー</h2>
+    <div class="ph">6次元（PDI / IDV / MAS / UAI / LTO / IVR）を 0–100 で描画</div>
+    <div id="radarbox" style="display:flex;justify-content:center"></div>
+    <div class="dimlegend" id="radarlegend" style="margin-top:8px;justify-content:center"></div></div>
+  <div class="panel"><h2>地域区分と所属国</h2>
+    <div class="ph">各「地域平均」は下記の所属国（データのある国）のスコアを次元ごとに平均したものです。地理的な区分です。</div>
+    <div id="regionlist"></div></div>
+  <div class="panel"><h2>文化圏区分と所属国</h2>
+    <div class="ph">GLOBE／Inglehart–Welzel などの文化クラスターに基づく区分です。例：オーストラリア・ニュージーランドは地理的にはオセアニアですが、文化圏では英国・アイルランド・北米と同じ<b>アングロサクソン</b>に属します。</div>
+    <div id="zonelist"></div></div>
+</section>
+
+<!-- 03 RANK -->
+<section class="view" id="v-rank">
+  <p class="lead">選択した次元について、全対象国を降順に並べます。</p>
+  <div class="controls"><div class="field"><label for="rdim">次元を選択</label><select id="rdim"></select></div></div>
+  <div class="panel"><h2 id="rtitle"></h2><div class="ph" id="rdesc"></div><div id="rankbars"></div></div>
+</section>
+
+<!-- 04 CORRELATION -->
+<section class="view" id="v-corr">
+  <p class="lead">6つの文化側面どうしの関係を見ます。左の<b>相関行列</b>はピアソンの相関係数 r（青＝正・赤＝負）。
+   右の<b>散布図</b>では、x軸・y軸に入れる文化側面を選ぶと、対象国の散布と回帰直線・相関係数が表示されます。</p>
+  <div class="gridtwo">
+    <div class="panel"><h2>相関行列</h2><div class="ph">ピアソン r（ペアワイズ完全データ）／ *** p&lt;.001, ** p&lt;.01, * p&lt;.05。セルをクリックで散布図に反映。</div>
+      <div style="overflow:auto"><table class="cmx" id="cmx"></table></div></div>
+    <div class="panel"><h2>散布図</h2>
+      <div class="controls" style="margin-bottom:12px">
+        <div class="field"><label for="cx">x 軸</label><select id="cx"></select></div>
+        <div class="field"><label for="cy">y 軸</label><select id="cy"></select></div></div>
+      <div id="corrscatter" style="display:flex;justify-content:center"></div>
+      <div class="scattercap" id="corrcap"></div></div>
+  </div>
+</section>
+
+<!-- 05 REGRESSION -->
+<section class="view" id="v-reg">
+  <p class="lead"><b>目的変数</b>：世界幸福度報告 2026（WHR26, 2025年 3年平均の生活評価ラダー）。
+   <b>独立変数</b>：ホフステードの文化6次元。両データの<b>共通国（N=<span id="nreg"></span>カ国）</b>のみを抽出し、
+   その共通国を母集団として各変数を<b>標準化（z得点）</b>した上でOLSによる標準化重回帰を行います。投入する次元はチェックボックスで選択できます。</p>
+  <div class="panel"><h2>投入する独立変数</h2>
+    <div class="ph">6次元から任意に選択（全変数を共通国内で標準化し、標準化偏回帰係数 β を比較）</div>
+    <div class="checks" id="regchecks"></div></div>
+  <div class="statgrid" id="regstats"></div>
+  <div class="gridtwo">
+    <div class="panel"><h2>係数表</h2>
+      <div class="ph">β：標準化偏回帰係数／VIF：分散拡大係数（&gt;3 で多重共線性に注意）／*** p&lt;.001, ** p&lt;.01, * p&lt;.05</div>
+      <table id="regtable"></table></div>
+    <div class="panel"><h2>観測値 × 予測値の散布図</h2>
+      <div class="ph">横軸＝モデル予測の幸福度（標準化）／縦軸＝実測の幸福度（標準化）／点線＝完全一致線</div>
+      <div id="regscatter" style="display:flex;justify-content:center"></div>
+      <div class="scattercap" id="regscattercap"></div></div>
+  </div>
+  <div class="panel"><h2>標準化係数 β（95%信頼区間）</h2>
+    <div class="ph">緑＝正の寄与／赤＝負の寄与／横棒＝95%CI</div>
+    <div id="coefchart"></div></div>
+  <div class="note" id="regnote"></div>
+</section>
+
+<!-- 06 DATA -->
+<section class="view" id="v-data">
+  <p class="lead">全対象国の6次元スコアとWHR幸福度。空欄はホフステード・データに該当値がない次元です。列見出しのクリックで並べ替え。</p>
+  <div class="tablewrap"><table id="datatable"></table></div>
+</section>
+
+<!-- DIMENSION EXPLAINER (above footnote, all tabs) -->
+<div class="dimexp">
+  <div class="secttl">ホフステード6次元の説明</div>
+  <p class="sectsub">各次元は0〜100で表され、値が高い側の極（High）と低い側の極（Low）の対比で文化の傾向を捉えます。</p>
+  <div class="dimcards" id="dimcards"></div>
+</div>
+
+<footer>
+  <b>出典 / Sources</b><br>
+  ・文化次元：Hofstede, G., Hofstede, G.J., &amp; Minkov, M. — <i>6 dimensions for website 2015-08-16</i>。
+  <a href="https://geerthofstede.com/research-and-vsm/dimension-data-matrix/?shem=rimspwouoe," target="_blank" rel="noopener">geerthofstede.com（Dimension data matrix）</a>より取得。<br>
+  ・幸福度：<i>World Happiness Report 2026</i>, Figure 2.1 Data（2025年・生活評価ラダー3年平均）。Helliwell, J.F. et al. (eds.)。<br>
+  6次元略号：PDI=権力格差／IDV=個人主義／MAS=男性性／UAI=不確実性回避／LTO=長期志向／IVR=放縦。<br><br>
+  <span class="cc">CC BY 4.0</span>作成：南雲岳彦（一般社団法人スマートシティ・インスティテュート 代表理事／慶應義塾大学 教授・京都大学 客員教授）。
+  本作品は <a href="https://creativecommons.org/licenses/by/4.0/deed.ja" target="_blank" rel="noopener">CC BY 4.0</a> の下で利用できます。
+</footer>
+</div>
+
+<script>
+const DASH = [{"country": "Albania", "jp": "アルバニア", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 61.461, "IVR": 14.509, "ladder": 5.662}, {"country": "Algeria", "jp": "アルジェリア", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 25.945, "IVR": 32.366, "ladder": 5.714}, {"country": "Andorra", "jp": "アンドラ", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": null, "IVR": 65.0, "ladder": null}, {"country": "Argentina", "jp": "アルゼンチン", "PDI": 49.0, "IDV": 46.0, "MAS": 56.0, "UAI": 86.0, "LTO": 20.403, "IVR": 61.83, "ladder": 6.43}, {"country": "Armenia", "jp": "アルメニア", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 60.957, "IVR": null, "ladder": 5.584}, {"country": "Australia", "jp": "オーストラリア", "PDI": 38.0, "IDV": 90.0, "MAS": 61.0, "UAI": 51.0, "LTO": 21.159, "IVR": 71.429, "ladder": 6.916}, {"country": "Austria", "jp": "オーストリア", "PDI": 11.0, "IDV": 55.0, "MAS": 79.0, "UAI": 70.0, "LTO": 60.453, "IVR": 62.723, "ladder": 6.845}, {"country": "Azerbaijan", "jp": "アゼルバイジャン", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 60.705, "IVR": 21.652, "ladder": 4.993}, {"country": "Bangladesh", "jp": "バングラデシュ", "PDI": 80.0, "IDV": 20.0, "MAS": 55.0, "UAI": 60.0, "LTO": 47.103, "IVR": 19.643, "ladder": 4.319}, {"country": "Belarus", "jp": "ベラルーシ", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 80.856, "IVR": 14.955, "ladder": null}, {"country": "Belgium", "jp": "ベルギー", "PDI": 65.0, "IDV": 75.0, "MAS": 54.0, "UAI": 94.0, "LTO": 81.864, "IVR": 56.696, "ladder": 6.926}, {"country": "Bosnia", "jp": "ボスニア・ヘルツェゴビナ", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 69.773, "IVR": 44.196, "ladder": 6.381}, {"country": "Brazil", "jp": "ブラジル", "PDI": 69.0, "IDV": 38.0, "MAS": 49.0, "UAI": 76.0, "LTO": 43.829, "IVR": 59.152, "ladder": 6.634}, {"country": "Bulgaria", "jp": "ブルガリア", "PDI": 70.0, "IDV": 30.0, "MAS": 40.0, "UAI": 85.0, "LTO": 69.018, "IVR": 15.848, "ladder": 5.703}, {"country": "Burkina Faso", "jp": "ブルキナファソ", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 27.456, "IVR": 18.08, "ladder": 4.455}, {"country": "Canada", "jp": "カナダ", "PDI": 39.0, "IDV": 80.0, "MAS": 52.0, "UAI": 48.0, "LTO": 36.02, "IVR": 68.304, "ladder": 6.741}, {"country": "Chile", "jp": "チリ", "PDI": 63.0, "IDV": 23.0, "MAS": 28.0, "UAI": 86.0, "LTO": 30.982, "IVR": 68.0, "ladder": 6.302}, {"country": "China", "jp": "中国", "PDI": 80.0, "IDV": 20.0, "MAS": 66.0, "UAI": 30.0, "LTO": 87.406, "IVR": 23.661, "ladder": 6.074}, {"country": "Colombia", "jp": "コロンビア", "PDI": 67.0, "IDV": 13.0, "MAS": 64.0, "UAI": 80.0, "LTO": 13.098, "IVR": 83.036, "ladder": 6.04}, {"country": "Costa Rica", "jp": "コスタリカ", "PDI": 35.0, "IDV": 15.0, "MAS": 21.0, "UAI": 86.0, "LTO": null, "IVR": null, "ladder": 7.439}, {"country": "Croatia", "jp": "クロアチア", "PDI": 73.0, "IDV": 33.0, "MAS": 40.0, "UAI": 80.0, "LTO": 58.438, "IVR": 33.259, "ladder": 6.009}, {"country": "Cyprus", "jp": "キプロス", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": null, "IVR": 69.866, "ladder": 6.126}, {"country": "Czech Rep", "jp": "チェコ", "PDI": 57.0, "IDV": 58.0, "MAS": 57.0, "UAI": 74.0, "LTO": 70.025, "IVR": 29.464, "ladder": 6.821}, {"country": "Denmark", "jp": "デンマーク", "PDI": 18.0, "IDV": 74.0, "MAS": 16.0, "UAI": 23.0, "LTO": 34.761, "IVR": 69.643, "ladder": 7.539}, {"country": "Dominican Rep", "jp": "ドミニカ共和国", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 13.098, "IVR": 54.241, "ladder": 6.093}, {"country": "Ecuador", "jp": "エクアドル", "PDI": 78.0, "IDV": 8.0, "MAS": 63.0, "UAI": 67.0, "LTO": null, "IVR": null, "ladder": 6.144}, {"country": "Egypt", "jp": "エジプト", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 6.801, "IVR": 4.241, "ladder": 3.862}, {"country": "Ethiopia", "jp": "エチオピア", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": null, "IVR": 46.0, "ladder": 3.985}, {"country": "El Salvador", "jp": "エルサルバドル", "PDI": 66.0, "IDV": 19.0, "MAS": 40.0, "UAI": 94.0, "LTO": 19.647, "IVR": 88.839, "ladder": 6.578}, {"country": "Estonia", "jp": "エストニア", "PDI": 40.0, "IDV": 60.0, "MAS": 30.0, "UAI": 60.0, "LTO": 82.116, "IVR": 16.295, "ladder": 6.41}, {"country": "Finland", "jp": "フィンランド", "PDI": 33.0, "IDV": 63.0, "MAS": 26.0, "UAI": 59.0, "LTO": 38.287, "IVR": 57.366, "ladder": 7.764}, {"country": "France", "jp": "フランス", "PDI": 68.0, "IDV": 71.0, "MAS": 43.0, "UAI": 86.0, "LTO": 63.476, "IVR": 47.768, "ladder": 6.586}, {"country": "Georgia", "jp": "ジョージア", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 38.287, "IVR": 31.92, "ladder": 5.517}, {"country": "Germany", "jp": "ドイツ", "PDI": 35.0, "IDV": 67.0, "MAS": 66.0, "UAI": 65.0, "LTO": 82.872, "IVR": 40.402, "ladder": 6.882}, {"country": "Ghana", "jp": "ガーナ", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 3.526, "IVR": 72.321, "ladder": 4.554}, {"country": "Great Britain", "jp": "英国", "PDI": 35.0, "IDV": 89.0, "MAS": 66.0, "UAI": 35.0, "LTO": 51.134, "IVR": 69.42, "ladder": 6.694}, {"country": "Greece", "jp": "ギリシャ", "PDI": 60.0, "IDV": 35.0, "MAS": 57.0, "UAI": 112.0, "LTO": 45.34, "IVR": 49.554, "ladder": 5.697}, {"country": "Guatemala", "jp": "グアテマラ", "PDI": 95.0, "IDV": 6.0, "MAS": 37.0, "UAI": 101.0, "LTO": null, "IVR": null, "ladder": 6.533}, {"country": "Hong Kong", "jp": "香港", "PDI": 68.0, "IDV": 25.0, "MAS": 57.0, "UAI": 29.0, "LTO": 60.957, "IVR": 16.964, "ladder": 5.569}, {"country": "Hungary", "jp": "ハンガリー", "PDI": 46.0, "IDV": 80.0, "MAS": 88.0, "UAI": 82.0, "LTO": 58.186, "IVR": 31.473, "ladder": 5.937}, {"country": "Iceland", "jp": "アイスランド", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 27.96, "IVR": 66.741, "ladder": 7.54}, {"country": "India", "jp": "インド", "PDI": 77.0, "IDV": 48.0, "MAS": 56.0, "UAI": 40.0, "LTO": 50.882, "IVR": 26.116, "ladder": 4.536}, {"country": "Indonesia", "jp": "インドネシア", "PDI": 78.0, "IDV": 14.0, "MAS": 46.0, "UAI": 48.0, "LTO": 61.965, "IVR": 37.723, "ladder": 5.617}, {"country": "Iran", "jp": "イラン", "PDI": 58.0, "IDV": 41.0, "MAS": 43.0, "UAI": 59.0, "LTO": 13.602, "IVR": 40.402, "ladder": 5.151}, {"country": "Iraq", "jp": "イラク", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 24.937, "IVR": 16.741, "ladder": 5.212}, {"country": "Ireland", "jp": "アイルランド", "PDI": 28.0, "IDV": 70.0, "MAS": 68.0, "UAI": 35.0, "LTO": 24.433, "IVR": 64.955, "ladder": 6.928}, {"country": "Israel", "jp": "イスラエル", "PDI": 13.0, "IDV": 54.0, "MAS": 47.0, "UAI": 81.0, "LTO": 37.531, "IVR": null, "ladder": 7.187}, {"country": "Italy", "jp": "イタリア", "PDI": 50.0, "IDV": 76.0, "MAS": 70.0, "UAI": 75.0, "LTO": 61.461, "IVR": 29.687, "ladder": 6.574}, {"country": "Jamaica", "jp": "ジャマイカ", "PDI": 45.0, "IDV": 39.0, "MAS": 68.0, "UAI": 13.0, "LTO": null, "IVR": null, "ladder": 6.305}, {"country": "Japan", "jp": "日本", "PDI": 54.0, "IDV": 46.0, "MAS": 95.0, "UAI": 92.0, "LTO": 87.909, "IVR": 41.741, "ladder": 6.13}, {"country": "Jordan", "jp": "ヨルダン", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 16.121, "IVR": 43.08, "ladder": 4.478}, {"country": "Korea South", "jp": "韓国", "PDI": 60.0, "IDV": 18.0, "MAS": 39.0, "UAI": 85.0, "LTO": 100.0, "IVR": 29.464, "ladder": 6.04}, {"country": "Kyrgyz Rep", "jp": "キルギス", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 65.995, "IVR": 39.286, "ladder": 6.049}, {"country": "Latvia", "jp": "ラトビア", "PDI": 44.0, "IDV": 70.0, "MAS": 9.0, "UAI": 63.0, "LTO": 68.766, "IVR": 12.946, "ladder": 6.365}, {"country": "Lithuania", "jp": "リトアニア", "PDI": 42.0, "IDV": 60.0, "MAS": 19.0, "UAI": 65.0, "LTO": 81.864, "IVR": 15.625, "ladder": 6.704}, {"country": "Luxembourg", "jp": "ルクセンブルク", "PDI": 40.0, "IDV": 60.0, "MAS": 50.0, "UAI": 70.0, "LTO": 63.98, "IVR": 56.027, "ladder": 7.063}, {"country": "Macedonia Rep", "jp": "北マケドニア", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 61.713, "IVR": 35.268, "ladder": 5.719}, {"country": "Malaysia", "jp": "マレーシア", "PDI": 104.0, "IDV": 26.0, "MAS": 50.0, "UAI": 36.0, "LTO": 40.806, "IVR": 57.143, "ladder": 6.005}, {"country": "Mali", "jp": "マリ", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 20.151, "IVR": 42.634, "ladder": 4.588}, {"country": "Malta", "jp": "マルタ", "PDI": 56.0, "IDV": 59.0, "MAS": 47.0, "UAI": 96.0, "LTO": 47.103, "IVR": 65.625, "ladder": 6.436}, {"country": "Mexico", "jp": "メキシコ", "PDI": 81.0, "IDV": 30.0, "MAS": 69.0, "UAI": 82.0, "LTO": 24.181, "IVR": 97.321, "ladder": 6.972}, {"country": "Moldova", "jp": "モルドバ", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 71.033, "IVR": 19.196, "ladder": 5.851}, {"country": "Montenegro", "jp": "モンテネグロ", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 75.315, "IVR": 19.866, "ladder": 6.139}, {"country": "Morocco", "jp": "モロッコ", "PDI": 70.0, "IDV": 46.0, "MAS": 53.0, "UAI": 68.0, "LTO": 14.106, "IVR": 25.446, "ladder": 4.646}, {"country": "Netherlands", "jp": "オランダ", "PDI": 38.0, "IDV": 80.0, "MAS": 14.0, "UAI": 53.0, "LTO": 67.003, "IVR": 68.304, "ladder": 7.223}, {"country": "New Zealand", "jp": "ニュージーランド", "PDI": 22.0, "IDV": 79.0, "MAS": 58.0, "UAI": 49.0, "LTO": 32.746, "IVR": 74.554, "ladder": 6.995}, {"country": "Nigeria", "jp": "ナイジェリア", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 12.846, "IVR": 83.929, "ladder": 4.788}, {"country": "Norway", "jp": "ノルウェー", "PDI": 31.0, "IDV": 69.0, "MAS": 8.0, "UAI": 50.0, "LTO": 34.509, "IVR": 55.134, "ladder": 7.242}, {"country": "Pakistan", "jp": "パキスタン", "PDI": 55.0, "IDV": 14.0, "MAS": 50.0, "UAI": 70.0, "LTO": 49.874, "IVR": 0.0, "ladder": 4.868}, {"country": "Panama", "jp": "パナマ", "PDI": 95.0, "IDV": 11.0, "MAS": 44.0, "UAI": 86.0, "LTO": null, "IVR": null, "ladder": 6.547}, {"country": "Peru", "jp": "ペルー", "PDI": 64.0, "IDV": 16.0, "MAS": 42.0, "UAI": 87.0, "LTO": 25.189, "IVR": 46.205, "ladder": 5.974}, {"country": "Philippines", "jp": "フィリピン", "PDI": 94.0, "IDV": 32.0, "MAS": 64.0, "UAI": 44.0, "LTO": 27.456, "IVR": 41.964, "ladder": 6.206}, {"country": "Poland", "jp": "ポーランド", "PDI": 68.0, "IDV": 60.0, "MAS": 64.0, "UAI": 93.0, "LTO": 37.783, "IVR": 29.241, "ladder": 6.768}, {"country": "Portugal", "jp": "ポルトガル", "PDI": 63.0, "IDV": 27.0, "MAS": 31.0, "UAI": 104.0, "LTO": 28.212, "IVR": 33.259, "ladder": 6.029}, {"country": "Puerto Rico", "jp": "プエルトリコ", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 0.0, "IVR": 89.955, "ladder": null}, {"country": "Romania", "jp": "ルーマニア", "PDI": 90.0, "IDV": 30.0, "MAS": 42.0, "UAI": 90.0, "LTO": 51.889, "IVR": 19.866, "ladder": 6.629}, {"country": "Russia", "jp": "ロシア", "PDI": 93.0, "IDV": 39.0, "MAS": 36.0, "UAI": 95.0, "LTO": 81.36, "IVR": 19.866, "ladder": 5.834}, {"country": "Rwanda", "jp": "ルワンダ", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 18.388, "IVR": 37.277, "ladder": null}, {"country": "Saudi Arabia", "jp": "サウジアラビア", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 35.516, "IVR": 52.232, "ladder": 6.817}, {"country": "Serbia", "jp": "セルビア", "PDI": 86.0, "IDV": 25.0, "MAS": 43.0, "UAI": 92.0, "LTO": 52.141, "IVR": 28.125, "ladder": 6.691}, {"country": "Singapore", "jp": "シンガポール", "PDI": 74.0, "IDV": 20.0, "MAS": 48.0, "UAI": 8.0, "LTO": 71.537, "IVR": 45.536, "ladder": 6.585}, {"country": "Slovak Rep", "jp": "スロバキア", "PDI": 104.0, "IDV": 52.0, "MAS": 110.0, "UAI": 51.0, "LTO": 76.574, "IVR": 28.348, "ladder": 6.255}, {"country": "Slovenia", "jp": "スロベニア", "PDI": 71.0, "IDV": 27.0, "MAS": 19.0, "UAI": 88.0, "LTO": 48.615, "IVR": 47.545, "ladder": 6.868}, {"country": "South Africa", "jp": "南アフリカ", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 34.0, "IVR": 63.0, "ladder": 5.009}, {"country": "Spain", "jp": "スペイン", "PDI": 57.0, "IDV": 51.0, "MAS": 42.0, "UAI": 86.0, "LTO": 47.607, "IVR": 43.527, "ladder": 6.54}, {"country": "Suriname", "jp": "スリナム", "PDI": 85.0, "IDV": 47.0, "MAS": 37.0, "UAI": 92.0, "LTO": null, "IVR": null, "ladder": null}, {"country": "Sweden", "jp": "スウェーデン", "PDI": 31.0, "IDV": 71.0, "MAS": 5.0, "UAI": 29.0, "LTO": 52.897, "IVR": 77.679, "ladder": 7.255}, {"country": "Switzerland", "jp": "スイス", "PDI": 34.0, "IDV": 68.0, "MAS": 70.0, "UAI": 58.0, "LTO": 73.552, "IVR": 66.071, "ladder": 7.018}, {"country": "Taiwan", "jp": "台湾", "PDI": 58.0, "IDV": 17.0, "MAS": 45.0, "UAI": 69.0, "LTO": 92.947, "IVR": 49.107, "ladder": 6.714}, {"country": "Tanzania", "jp": "タンザニア", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 34.005, "IVR": 38.393, "ladder": 3.902}, {"country": "Thailand", "jp": "タイ", "PDI": 64.0, "IDV": 20.0, "MAS": 34.0, "UAI": 64.0, "LTO": 31.738, "IVR": 45.089, "ladder": 6.296}, {"country": "Trinidad and Tobago", "jp": "トリニダード・トバゴ", "PDI": 47.0, "IDV": 16.0, "MAS": 58.0, "UAI": 55.0, "LTO": 12.594, "IVR": 80.134, "ladder": 5.905}, {"country": "Turkey", "jp": "トルコ", "PDI": 66.0, "IDV": 37.0, "MAS": 45.0, "UAI": 85.0, "LTO": 45.592, "IVR": 49.107, "ladder": 5.3}, {"country": "U.S.A.", "jp": "米国", "PDI": 40.0, "IDV": 91.0, "MAS": 62.0, "UAI": 46.0, "LTO": 25.693, "IVR": 68.08, "ladder": 6.816}, {"country": "Uganda", "jp": "ウガンダ", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 23.678, "IVR": 52.455, "ladder": 4.491}, {"country": "Ukraine", "jp": "ウクライナ", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 86.398, "IVR": 14.286, "ladder": 4.658}, {"country": "Uruguay", "jp": "ウルグアイ", "PDI": 61.0, "IDV": 36.0, "MAS": 38.0, "UAI": 100.0, "LTO": 26.196, "IVR": 53.348, "ladder": 6.635}, {"country": "Venezuela", "jp": "ベネズエラ", "PDI": 81.0, "IDV": 12.0, "MAS": 73.0, "UAI": 76.0, "LTO": 15.617, "IVR": 100.0, "ladder": 5.756}, {"country": "Vietnam", "jp": "ベトナム", "PDI": 70.0, "IDV": 20.0, "MAS": 40.0, "UAI": 30.0, "LTO": 57.179, "IVR": 35.491, "ladder": 6.428}, {"country": "Zambia", "jp": "ザンビア", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 30.227, "IVR": 42.187, "ladder": 4.106}, {"country": "Zimbabwe", "jp": "ジンバブエ", "PDI": null, "IDV": null, "MAS": null, "UAI": null, "LTO": 15.365, "IVR": 27.679, "ladder": 3.346}];
+const REG  = [{"country": "Argentina", "jp": "アルゼンチン", "PDI": 49.0, "IDV": 46.0, "MAS": 56.0, "UAI": 86.0, "LTO": 20.403, "IVR": 61.83, "ladder": 6.43}, {"country": "Australia", "jp": "オーストラリア", "PDI": 38.0, "IDV": 90.0, "MAS": 61.0, "UAI": 51.0, "LTO": 21.159, "IVR": 71.429, "ladder": 6.916}, {"country": "Austria", "jp": "オーストリア", "PDI": 11.0, "IDV": 55.0, "MAS": 79.0, "UAI": 70.0, "LTO": 60.453, "IVR": 62.723, "ladder": 6.845}, {"country": "Bangladesh", "jp": "バングラデシュ", "PDI": 80.0, "IDV": 20.0, "MAS": 55.0, "UAI": 60.0, "LTO": 47.103, "IVR": 19.643, "ladder": 4.319}, {"country": "Belgium", "jp": "ベルギー", "PDI": 65.0, "IDV": 75.0, "MAS": 54.0, "UAI": 94.0, "LTO": 81.864, "IVR": 56.696, "ladder": 6.926}, {"country": "Brazil", "jp": "ブラジル", "PDI": 69.0, "IDV": 38.0, "MAS": 49.0, "UAI": 76.0, "LTO": 43.829, "IVR": 59.152, "ladder": 6.634}, {"country": "Bulgaria", "jp": "ブルガリア", "PDI": 70.0, "IDV": 30.0, "MAS": 40.0, "UAI": 85.0, "LTO": 69.018, "IVR": 15.848, "ladder": 5.703}, {"country": "Canada", "jp": "カナダ", "PDI": 39.0, "IDV": 80.0, "MAS": 52.0, "UAI": 48.0, "LTO": 36.02, "IVR": 68.304, "ladder": 6.741}, {"country": "Chile", "jp": "チリ", "PDI": 63.0, "IDV": 23.0, "MAS": 28.0, "UAI": 86.0, "LTO": 30.982, "IVR": 68.0, "ladder": 6.302}, {"country": "China", "jp": "中国", "PDI": 80.0, "IDV": 20.0, "MAS": 66.0, "UAI": 30.0, "LTO": 87.406, "IVR": 23.661, "ladder": 6.074}, {"country": "Colombia", "jp": "コロンビア", "PDI": 67.0, "IDV": 13.0, "MAS": 64.0, "UAI": 80.0, "LTO": 13.098, "IVR": 83.036, "ladder": 6.04}, {"country": "Croatia", "jp": "クロアチア", "PDI": 73.0, "IDV": 33.0, "MAS": 40.0, "UAI": 80.0, "LTO": 58.438, "IVR": 33.259, "ladder": 6.009}, {"country": "Czech Rep", "jp": "チェコ", "PDI": 57.0, "IDV": 58.0, "MAS": 57.0, "UAI": 74.0, "LTO": 70.025, "IVR": 29.464, "ladder": 6.821}, {"country": "Denmark", "jp": "デンマーク", "PDI": 18.0, "IDV": 74.0, "MAS": 16.0, "UAI": 23.0, "LTO": 34.761, "IVR": 69.643, "ladder": 7.539}, {"country": "El Salvador", "jp": "エルサルバドル", "PDI": 66.0, "IDV": 19.0, "MAS": 40.0, "UAI": 94.0, "LTO": 19.647, "IVR": 88.839, "ladder": 6.578}, {"country": "Estonia", "jp": "エストニア", "PDI": 40.0, "IDV": 60.0, "MAS": 30.0, "UAI": 60.0, "LTO": 82.116, "IVR": 16.295, "ladder": 6.41}, {"country": "Finland", "jp": "フィンランド", "PDI": 33.0, "IDV": 63.0, "MAS": 26.0, "UAI": 59.0, "LTO": 38.287, "IVR": 57.366, "ladder": 7.764}, {"country": "France", "jp": "フランス", "PDI": 68.0, "IDV": 71.0, "MAS": 43.0, "UAI": 86.0, "LTO": 63.476, "IVR": 47.768, "ladder": 6.586}, {"country": "Germany", "jp": "ドイツ", "PDI": 35.0, "IDV": 67.0, "MAS": 66.0, "UAI": 65.0, "LTO": 82.872, "IVR": 40.402, "ladder": 6.882}, {"country": "Great Britain", "jp": "英国", "PDI": 35.0, "IDV": 89.0, "MAS": 66.0, "UAI": 35.0, "LTO": 51.134, "IVR": 69.42, "ladder": 6.694}, {"country": "Greece", "jp": "ギリシャ", "PDI": 60.0, "IDV": 35.0, "MAS": 57.0, "UAI": 112.0, "LTO": 45.34, "IVR": 49.554, "ladder": 5.697}, {"country": "Hong Kong", "jp": "香港", "PDI": 68.0, "IDV": 25.0, "MAS": 57.0, "UAI": 29.0, "LTO": 60.957, "IVR": 16.964, "ladder": 5.569}, {"country": "Hungary", "jp": "ハンガリー", "PDI": 46.0, "IDV": 80.0, "MAS": 88.0, "UAI": 82.0, "LTO": 58.186, "IVR": 31.473, "ladder": 5.937}, {"country": "India", "jp": "インド", "PDI": 77.0, "IDV": 48.0, "MAS": 56.0, "UAI": 40.0, "LTO": 50.882, "IVR": 26.116, "ladder": 4.536}, {"country": "Indonesia", "jp": "インドネシア", "PDI": 78.0, "IDV": 14.0, "MAS": 46.0, "UAI": 48.0, "LTO": 61.965, "IVR": 37.723, "ladder": 5.617}, {"country": "Iran", "jp": "イラン", "PDI": 58.0, "IDV": 41.0, "MAS": 43.0, "UAI": 59.0, "LTO": 13.602, "IVR": 40.402, "ladder": 5.151}, {"country": "Ireland", "jp": "アイルランド", "PDI": 28.0, "IDV": 70.0, "MAS": 68.0, "UAI": 35.0, "LTO": 24.433, "IVR": 64.955, "ladder": 6.928}, {"country": "Italy", "jp": "イタリア", "PDI": 50.0, "IDV": 76.0, "MAS": 70.0, "UAI": 75.0, "LTO": 61.461, "IVR": 29.687, "ladder": 6.574}, {"country": "Japan", "jp": "日本", "PDI": 54.0, "IDV": 46.0, "MAS": 95.0, "UAI": 92.0, "LTO": 87.909, "IVR": 41.741, "ladder": 6.13}, {"country": "Korea South", "jp": "韓国", "PDI": 60.0, "IDV": 18.0, "MAS": 39.0, "UAI": 85.0, "LTO": 100.0, "IVR": 29.464, "ladder": 6.04}, {"country": "Latvia", "jp": "ラトビア", "PDI": 44.0, "IDV": 70.0, "MAS": 9.0, "UAI": 63.0, "LTO": 68.766, "IVR": 12.946, "ladder": 6.365}, {"country": "Lithuania", "jp": "リトアニア", "PDI": 42.0, "IDV": 60.0, "MAS": 19.0, "UAI": 65.0, "LTO": 81.864, "IVR": 15.625, "ladder": 6.704}, {"country": "Luxembourg", "jp": "ルクセンブルク", "PDI": 40.0, "IDV": 60.0, "MAS": 50.0, "UAI": 70.0, "LTO": 63.98, "IVR": 56.027, "ladder": 7.063}, {"country": "Malaysia", "jp": "マレーシア", "PDI": 104.0, "IDV": 26.0, "MAS": 50.0, "UAI": 36.0, "LTO": 40.806, "IVR": 57.143, "ladder": 6.005}, {"country": "Malta", "jp": "マルタ", "PDI": 56.0, "IDV": 59.0, "MAS": 47.0, "UAI": 96.0, "LTO": 47.103, "IVR": 65.625, "ladder": 6.436}, {"country": "Mexico", "jp": "メキシコ", "PDI": 81.0, "IDV": 30.0, "MAS": 69.0, "UAI": 82.0, "LTO": 24.181, "IVR": 97.321, "ladder": 6.972}, {"country": "Morocco", "jp": "モロッコ", "PDI": 70.0, "IDV": 46.0, "MAS": 53.0, "UAI": 68.0, "LTO": 14.106, "IVR": 25.446, "ladder": 4.646}, {"country": "Netherlands", "jp": "オランダ", "PDI": 38.0, "IDV": 80.0, "MAS": 14.0, "UAI": 53.0, "LTO": 67.003, "IVR": 68.304, "ladder": 7.223}, {"country": "New Zealand", "jp": "ニュージーランド", "PDI": 22.0, "IDV": 79.0, "MAS": 58.0, "UAI": 49.0, "LTO": 32.746, "IVR": 74.554, "ladder": 6.995}, {"country": "Norway", "jp": "ノルウェー", "PDI": 31.0, "IDV": 69.0, "MAS": 8.0, "UAI": 50.0, "LTO": 34.509, "IVR": 55.134, "ladder": 7.242}, {"country": "Pakistan", "jp": "パキスタン", "PDI": 55.0, "IDV": 14.0, "MAS": 50.0, "UAI": 70.0, "LTO": 49.874, "IVR": 0.0, "ladder": 4.868}, {"country": "Peru", "jp": "ペルー", "PDI": 64.0, "IDV": 16.0, "MAS": 42.0, "UAI": 87.0, "LTO": 25.189, "IVR": 46.205, "ladder": 5.974}, {"country": "Philippines", "jp": "フィリピン", "PDI": 94.0, "IDV": 32.0, "MAS": 64.0, "UAI": 44.0, "LTO": 27.456, "IVR": 41.964, "ladder": 6.206}, {"country": "Poland", "jp": "ポーランド", "PDI": 68.0, "IDV": 60.0, "MAS": 64.0, "UAI": 93.0, "LTO": 37.783, "IVR": 29.241, "ladder": 6.768}, {"country": "Portugal", "jp": "ポルトガル", "PDI": 63.0, "IDV": 27.0, "MAS": 31.0, "UAI": 104.0, "LTO": 28.212, "IVR": 33.259, "ladder": 6.029}, {"country": "Romania", "jp": "ルーマニア", "PDI": 90.0, "IDV": 30.0, "MAS": 42.0, "UAI": 90.0, "LTO": 51.889, "IVR": 19.866, "ladder": 6.629}, {"country": "Russia", "jp": "ロシア", "PDI": 93.0, "IDV": 39.0, "MAS": 36.0, "UAI": 95.0, "LTO": 81.36, "IVR": 19.866, "ladder": 5.834}, {"country": "Serbia", "jp": "セルビア", "PDI": 86.0, "IDV": 25.0, "MAS": 43.0, "UAI": 92.0, "LTO": 52.141, "IVR": 28.125, "ladder": 6.691}, {"country": "Singapore", "jp": "シンガポール", "PDI": 74.0, "IDV": 20.0, "MAS": 48.0, "UAI": 8.0, "LTO": 71.537, "IVR": 45.536, "ladder": 6.585}, {"country": "Slovak Rep", "jp": "スロバキア", "PDI": 104.0, "IDV": 52.0, "MAS": 110.0, "UAI": 51.0, "LTO": 76.574, "IVR": 28.348, "ladder": 6.255}, {"country": "Slovenia", "jp": "スロベニア", "PDI": 71.0, "IDV": 27.0, "MAS": 19.0, "UAI": 88.0, "LTO": 48.615, "IVR": 47.545, "ladder": 6.868}, {"country": "Spain", "jp": "スペイン", "PDI": 57.0, "IDV": 51.0, "MAS": 42.0, "UAI": 86.0, "LTO": 47.607, "IVR": 43.527, "ladder": 6.54}, {"country": "Sweden", "jp": "スウェーデン", "PDI": 31.0, "IDV": 71.0, "MAS": 5.0, "UAI": 29.0, "LTO": 52.897, "IVR": 77.679, "ladder": 7.255}, {"country": "Switzerland", "jp": "スイス", "PDI": 34.0, "IDV": 68.0, "MAS": 70.0, "UAI": 58.0, "LTO": 73.552, "IVR": 66.071, "ladder": 7.018}, {"country": "Taiwan", "jp": "台湾", "PDI": 58.0, "IDV": 17.0, "MAS": 45.0, "UAI": 69.0, "LTO": 92.947, "IVR": 49.107, "ladder": 6.714}, {"country": "Thailand", "jp": "タイ", "PDI": 64.0, "IDV": 20.0, "MAS": 34.0, "UAI": 64.0, "LTO": 31.738, "IVR": 45.089, "ladder": 6.296}, {"country": "Trinidad and Tobago", "jp": "トリニダード・トバゴ", "PDI": 47.0, "IDV": 16.0, "MAS": 58.0, "UAI": 55.0, "LTO": 12.594, "IVR": 80.134, "ladder": 5.905}, {"country": "Turkey", "jp": "トルコ", "PDI": 66.0, "IDV": 37.0, "MAS": 45.0, "UAI": 85.0, "LTO": 45.592, "IVR": 49.107, "ladder": 5.3}, {"country": "U.S.A.", "jp": "米国", "PDI": 40.0, "IDV": 91.0, "MAS": 62.0, "UAI": 46.0, "LTO": 25.693, "IVR": 68.08, "ladder": 6.816}, {"country": "Uruguay", "jp": "ウルグアイ", "PDI": 61.0, "IDV": 36.0, "MAS": 38.0, "UAI": 100.0, "LTO": 26.196, "IVR": 53.348, "ladder": 6.635}, {"country": "Venezuela", "jp": "ベネズエラ", "PDI": 81.0, "IDV": 12.0, "MAS": 73.0, "UAI": 76.0, "LTO": 15.617, "IVR": 100.0, "ladder": 5.756}, {"country": "Vietnam", "jp": "ベトナム", "PDI": 70.0, "IDV": 20.0, "MAS": 40.0, "UAI": 30.0, "LTO": 57.179, "IVR": 35.491, "ladder": 6.428}];
+const DIMS = [
+ {k:'PDI',jp:'権力格差',en:'Power Distance',c:'#B5495B',hi:'階層・上下関係を当然視',lo:'対等・分権を志向',
+   desc:'社会の成員が、権力が不平等に分配されている状態をどの程度受け入れ、期待するか。値が高いほど階層・権威・年功を当然のものとみなし、低いほど対等な関係や分権、意思決定への参加を志向します。'},
+ {k:'IDV',jp:'個人主義',en:'Individualism',c:'#2C6E9E',hi:'個人の自由・自己責任',lo:'集団への忠誠（集団主義）',
+   desc:'個人が「私」として自律的に行動するか、「私たち」という集団に統合されるか。高いほど個人の自由・自立・自己責任を重視し、低いほど集団への帰属・忠誠・相互扶助を重んじる集団主義的傾向を示します。'},
+ {k:'MAS',jp:'男性性',en:'Masculinity',c:'#C9881F',hi:'達成・競争・成功を重視',lo:'協調・思いやり・生活の質',
+   desc:'社会が達成・競争・成功（男性性）を重視するか、協調・謙虚さ・生活の質（女性性）を重視するか。高いほど成果や地位への志向が強く、低いほど合意形成やケア、ワークライフバランスを重んじます。'},
+ {k:'UAI',jp:'不確実性回避',en:'Uncertainty Avoidance',c:'#6A5C92',hi:'規則・構造・予測可能性を求める',lo:'曖昧さに寛容・変化を許容',
+   desc:'曖昧さや未知・不確実な状況に対する不快感の強さ。高いほど明確な規則・構造・予測可能性を求め、逸脱に不寛容になりやすく、低いほど曖昧さやリスク、変化を受け入れやすい傾向を示します。'},
+ {k:'LTO',jp:'長期志向',en:'Long-term Orientation',c:'#2C5F2D',hi:'将来志向・倹約・適応',lo:'伝統尊重・面子・即時充足',
+   desc:'将来の報酬に向けた忍耐・倹約・状況適応を重視するか（長期志向）、伝統の尊重・社会的義務・面子・即時の成果を重視するか（短期志向）。高いほど実利的で将来計画的な価値観を示します。'},
+ {k:'IVR',jp:'放縦',en:'Indulgence',c:'#C2603A',hi:'欲求充足・余暇・楽しみを肯定',lo:'自制・規範による抑制',
+   desc:'人生を楽しみ、基本的・自然な欲求を満たすことを自由に許容するか（放縦）、社会規範によって抑制するか（抑制）。高いほど幸福感・余暇・自由の表出を肯定し、低いほど自制・義務・統制を重んじます。'},
+];
+const CMAP=Object.fromEntries(DIMS.map(d=>[d.k,d.c]));
+const SERIES=['#1A2238','#B5495B','#2C6E9E','#C9881F'];
+const DEFAULT4=['Japan','Finland','U.S.A.','China'];
+const $=s=>document.querySelector(s);
+const nm=o=>o.jp&&o.jp!==o.country? o.jp : o.country;
+const sortedDash=[...DASH].sort((a,b)=>nm(a).localeCompare(nm(b),'ja'));
+const optHtml=(withNone)=>(withNone?'<option value="">— なし —</option>':'')+sortedDash.map(d=>`<option value="${DASH.indexOf(d)}">${nm(d)}</option>`).join('');
+
+/* ===== regional groupings (shared by profile & radar) ===== */
+const REGIONDEF=[
+ ['nordic','北欧',['Denmark','Finland','Norway','Sweden','Iceland']],
+ ['westeu','西欧',['Austria','Belgium','France','Germany','Great Britain','Ireland','Luxembourg','Netherlands','Switzerland']],
+ ['southeu','南欧',['Greece','Italy','Malta','Portugal','Spain']],
+ ['easteu','東欧',['Albania','Armenia','Azerbaijan','Belarus','Bosnia','Bulgaria','Croatia','Czech Rep','Estonia','Georgia','Hungary','Latvia','Lithuania','Macedonia Rep','Moldova','Montenegro','Poland','Romania','Russia','Serbia','Slovak Rep','Slovenia','Ukraine']],
+ ['eastasia','東アジア',['China','Hong Kong','Japan','Korea South','Taiwan']],
+ ['seasia','東南アジア',['Indonesia','Malaysia','Philippines','Singapore','Thailand','Vietnam']],
+ ['southasia','南アジア',['Bangladesh','India','Pakistan']],
+ ['northam','北米',['Canada','U.S.A.','Mexico']],
+ ['southam','南米',['Argentina','Brazil','Chile','Colombia','Ecuador','Peru','Suriname','Uruguay','Venezuela']],
+ ['camcarib','中米・カリブ',['Costa Rica','Dominican Rep','El Salvador','Guatemala','Jamaica','Panama','Puerto Rico','Trinidad and Tobago']],
+ ['mena','中東・北アフリカ',['Egypt','Iran','Iraq','Israel','Jordan','Morocco','Saudi Arabia','Turkey']],
+ ['ssafrica','サブサハラ・アフリカ',['Burkina Faso','Ethiopia','Ghana','Mali','Nigeria','Rwanda','South Africa','Tanzania','Uganda','Zambia','Zimbabwe']],
+ ['oceania','オセアニア',['Australia','New Zealand']],
+];
+/* ===== cultural-zone groupings (文化圏：GLOBE/Inglehart 等の文化クラスターに基づく) ===== */
+const ZONEDEF=[
+ ['z_nordic','ノルディック',['Denmark','Finland','Norway','Sweden','Iceland']],
+ ['z_anglo','アングロサクソン',['Australia','Canada','Great Britain','Ireland','New Zealand','U.S.A.']],
+ ['z_germanic','ゲルマン',['Austria','Belgium','Germany','Luxembourg','Netherlands','Switzerland']],
+ ['z_medi','ラテン・地中海',['France','Greece','Italy','Malta','Portugal','Spain']],
+ ['z_eeuro','東欧（スラブ・正教）',['Albania','Armenia','Azerbaijan','Belarus','Bosnia','Bulgaria','Croatia','Czech Rep','Estonia','Georgia','Hungary','Latvia','Lithuania','Macedonia Rep','Moldova','Montenegro','Poland','Romania','Russia','Serbia','Slovak Rep','Slovenia','Ukraine']],
+ ['z_confucian','儒教',['China','Hong Kong','Japan','Korea South','Singapore','Taiwan','Vietnam']],
+ ['z_seasia','東南アジア',['Indonesia','Malaysia','Philippines','Thailand']],
+ ['z_southasia','南アジア',['Bangladesh','India','Pakistan']],
+ ['z_latin','ラテンアメリカ',['Argentina','Brazil','Chile','Colombia','Costa Rica','Dominican Rep','Ecuador','El Salvador','Guatemala','Jamaica','Mexico','Panama','Peru','Puerto Rico','Suriname','Trinidad and Tobago','Uruguay','Venezuela']],
+ ['z_islamic','中東・イスラム',['Egypt','Iran','Iraq','Jordan','Morocco','Saudi Arabia','Turkey']],
+ ['z_ssafrica','サブサハラ・アフリカ',['Burkina Faso','Ethiopia','Ghana','Mali','Nigeria','Rwanda','South Africa','Tanzania','Uganda','Zambia','Zimbabwe']],
+];
+const REGION_OF={};REGIONDEF.forEach(r=>r[2].forEach(c=>REGION_OF[c]=r[1]));
+const ZONE_OF={};ZONEDEF.forEach(r=>r[2].forEach(c=>ZONE_OF[c]=r[1]));
+const regionOf=o=>o._group?'—':(REGION_OF[o.country]||'その他');
+const zoneOf=o=>o._group?'—':(ZONE_OF[o.country]||'その他');
+
+
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on','v-'+b.dataset.v===v.id));
+});
+
+/* ===== dimension explainer cards ===== */
+$('#dimcards').innerHTML=DIMS.map(d=>`<div class="dimcard">
+  <div class="hd"><span class="badge" style="background:${d.c}">${d.k}</span>
+    <span class="nm">${d.jp}</span><span class="en">${d.en}</span></div>
+  <p>${d.desc}</p>
+  <div class="poles"><span><b style="color:${d.c}">High ▲</b> ${d.hi}</span><span class="lo">${d.lo} <b>▼ Low</b></span></div>
+</div>`).join('');
+
+/* ===================== 01 PROFILE (4 countries) ===================== */
+$('#profsel').innerHTML=[0,1,2,3].map(i=>`<div class="field"><label>系列 ${i+1}</label>
+  <select class="psel" data-i="${i}">${optHtml(i>0)}</select></div>`).join('');
+document.querySelectorAll('.psel').forEach((s,i)=>{
+  s.value=DASH.findIndex(d=>d.country===DEFAULT4[i]); s.onchange=drawProfile;});
+function drawProfile(){
+  const picks=[...document.querySelectorAll('.psel')].map(s=>s.value).filter(v=>v!=='').map(v=>DASH[+v]);
+  $('#psub').textContent='ホフステード文化6次元スコア（0–100）　｜　'+picks.map(p=>nm(p)+(p.ladder!=null?`(幸福度${p.ladder.toFixed(2)})`:'')).join('　／　');
+  $('#pbars').innerHTML=DIMS.map(d=>{
+    const bars=picks.map((p,si)=>{const v=p[d.k];
+      return `<div class="gbar"><div class="track">${v==null?'<div class="miss" style="padding-left:6px">データなし</div>':`<div class="fill" style="width:${v}%;background:${SERIES[si]}"></div>`}</div>
+        <div class="gv">${v==null?'—':v}</div></div>`;}).join('');
+    return `<div class="barrow"><div class="lbl">${d.jp}<small>${d.k} · ${d.en}</small></div><div class="grp">${bars}</div></div>`;
+  }).join('');
+  $('#plegend').innerHTML=picks.map((p,i)=>`<span><i class="swatch" style="background:${SERIES[i]}"></i>${nm(p)}　<small style="color:var(--ink2)">地域：${regionOf(p)}／文化圏：${zoneOf(p)}</small></span>`).join('');
+}
+drawProfile();
+
+/* ===================== 02 RADAR ===================== */
+const avg=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:null;
+function groupEntity(defs,key){
+  const def=defs.find(r=>r[0]===key);
+  const members=DASH.filter(d=>def[2].includes(d.country));
+  const o={_group:true,_members:members.length};
+  ['PDI','IDV','MAS','UAI','LTO','IVR','ladder'].forEach(k=>{
+    const vals=members.filter(m=>m[k]!=null).map(m=>m[k]);o[k]=vals.length?Math.round(avg(vals)*100)/100:null;});
+  o.country=def[1];o.jp=`【${def[1]}】平均`;return o;
+}
+function resolveEntity(val){return val[0]==='R'?groupEntity(REGIONDEF,val.slice(2)):val[0]==='Z'?groupEntity(ZONEDEF,val.slice(2)):DASH[+val];}
+const grpOpts=(defs,prefix,label)=>'<optgroup label="'+label+'">'+defs.map(r=>{const n=DASH.filter(d=>r[2].includes(d.country)).length;return n?`<option value="${prefix}:${r[0]}">【${r[1]}】平均（${n}カ国）</option>`:'';}).join('')+'</optgroup>';
+const radarOpt=()=>'<option value="">— なし —</option>'
+  +grpOpts(REGIONDEF,'R','地域平均')+grpOpts(ZONEDEF,'Z','文化圏平均')
+  +'<optgroup label="国・地域">'+sortedDash.map(d=>`<option value="${DASH.indexOf(d)}">${nm(d)}</option>`).join('')+'</optgroup>';
+const RDEFAULT=['Z:z_nordic','Z:z_anglo','Z:z_confucian','Z:z_medi'];
+$('#radarsel').innerHTML=[0,1,2,3].map(i=>`<div class="field"><label>系列 ${i+1}</label>
+  <select class="rsel" data-i="${i}">${radarOpt()}</select></div>`).join('');
+document.querySelectorAll('.rsel').forEach((s,i)=>{s.value=RDEFAULT[i];s.onchange=drawRadar;});
+function drawRadar(){
+  const W=460,cx=230,cy=230,R=170;
+  const picks=[...document.querySelectorAll('.rsel')].map(s=>s.value).filter(v=>v!=='').map(resolveEntity);
+  const ang=i=>(-90+i*60)*Math.PI/180, pt=(i,r)=>[cx+Math.cos(ang(i))*r,cy+Math.sin(ang(i))*r];
+  let g='';
+  for(let ring=1;ring<=4;ring++){const rr=R*ring/4;g+=`<polygon points="${DIMS.map((_,i)=>pt(i,rr).join(',')).join(' ')}" fill="none" stroke="var(--line)"/>`;}
+  DIMS.forEach((d,i)=>{const[x,y]=pt(i,R);g+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="var(--line2)"/>`;
+    const[lx,ly]=pt(i,R+26);g+=`<text x="${lx}" y="${ly}" text-anchor="middle" font-size="12" font-weight="700" fill="${d.c}">${d.k}</text>
+      <text x="${lx}" y="${ly+13}" text-anchor="middle" font-size="9.5" fill="var(--ink2)">${d.jp}</text>`;});
+  picks.forEach((p,si)=>{const col=SERIES[si];const pts=DIMS.map((d,i)=>pt(i,R*(p[d.k]==null?0:p[d.k])/100));
+    g+=`<polygon points="${pts.map(q=>q.join(',')).join(' ')}" fill="${col}" fill-opacity="0.10" stroke="${col}" stroke-width="2"/>`;
+    pts.forEach(q=>g+=`<circle cx="${q[0]}" cy="${q[1]}" r="3" fill="${col}"/>`);});
+  $('#radarbox').innerHTML=`<svg viewBox="0 0 ${W} ${W}" width="${W}">${g}</svg>`;
+  $('#radarlegend').innerHTML=picks.map((p,i)=>`<span><i class="swatch" style="background:${SERIES[i]}"></i>${nm(p)}${p.ladder!=null?` · 幸福度${p.ladder.toFixed(2)}`:''}</span>`).join('');
+}
+drawRadar();
+/* membership lists (region + cultural zone) */
+const listHtml=defs=>defs.map(r=>{
+  const mem=sortedDash.filter(d=>r[2].includes(d.country));
+  return `<div style="display:grid;grid-template-columns:160px 1fr;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);align-items:baseline">
+    <div style="font-weight:700;font-size:13.5px">【${r[1]}】<small style="color:var(--ink2);font-weight:400">${mem.length}カ国</small></div>
+    <div style="font-size:12.5px;color:var(--ink2);line-height:1.7">${mem.map(d=>nm(d)).join('・')}</div></div>`;
+}).join('');
+$('#regionlist').innerHTML=listHtml(REGIONDEF);
+$('#zonelist').innerHTML=listHtml(ZONEDEF);
+
+/* ===================== 03 RANK ===================== */
+$('#rdim').innerHTML=DIMS.map(d=>`<option value="${d.k}">${d.k} · ${d.jp}（${d.en}）</option>`).join('');
+function drawRank(){
+  const k=$('#rdim').value,d=DIMS.find(x=>x.k===k);
+  $('#rtitle').textContent=`${d.jp}（${d.k}）ランキング`;$('#rdesc').textContent=d.desc;
+  const rows=DASH.filter(x=>x[k]!=null).sort((a,b)=>b[k]-a[k]),mx=Math.max(...rows.map(r=>r[k]));
+  $('#rankbars').innerHTML=rows.map((r,i)=>`<div class="barrow" style="grid-template-columns:30px 150px 1fr 42px">
+    <div style="text-align:right;color:var(--ink2);font-size:12px">${i+1}</div><div class="lbl">${nm(r)}</div>
+    <div class="track" style="height:22px"><div class="fill" style="width:${r[k]/mx*100}%;background:${d.c}"></div></div>
+    <div class="gv" style="font-size:14px">${r[k]}</div></div>`).join('');
+}
+$('#rdim').onchange=drawRank;drawRank();
+
+/* ===================== STATS ENGINE ===================== */
+function gammaln(x){const c=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];let y=x,t=x+5.5;t-=(x+0.5)*Math.log(t);let s=1.000000000190015;for(let j=0;j<6;j++){y++;s+=c[j]/y;}return -t+Math.log(2.5066282746310005*s/x);}
+function betacf(a,b,x){const F=1e-30;let qab=a+b,qap=a+1,qam=a-1,c=1,dd=1-qab*x/qap;if(Math.abs(dd)<F)dd=F;dd=1/dd;let h=dd;for(let m=1;m<=200;m++){let m2=2*m,aa=m*(b-m)*x/((qam+m2)*(a+m2));dd=1+aa*dd;if(Math.abs(dd)<F)dd=F;c=1+aa/c;if(Math.abs(c)<F)c=F;dd=1/dd;h*=dd*c;aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));dd=1+aa*dd;if(Math.abs(dd)<F)dd=F;c=1+aa/c;if(Math.abs(c)<F)c=F;dd=1/dd;let del=dd*c;h*=del;if(Math.abs(del-1)<3e-7)break;}return h;}
+function betai(a,b,x){if(x<=0)return 0;if(x>=1)return 1;const bt=Math.exp(gammaln(a+b)-gammaln(a)-gammaln(b)+a*Math.log(x)+b*Math.log(1-x));return x<(a+1)/(a+b+2)?bt*betacf(a,b,x)/a:1-bt*betacf(b,a,1-x)/b;}
+function tP(t,df){return betai(df/2,0.5,df/(df+t*t));}
+function fP(F,d1,d2){return betai(d2/2,d1/2,d2/(d2+d1*F));}
+const mean=a=>a.reduce((s,v)=>s+v,0)/a.length;
+const sd=a=>{const m=mean(a);return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1));};
+function inv(M){const n=M.length,A=M.map((r,i)=>[...r,...Array(n).fill(0).map((_,j)=>i===j?1:0)]);for(let i=0;i<n;i++){let p=i;for(let r=i+1;r<n;r++)if(Math.abs(A[r][i])>Math.abs(A[p][i]))p=r;[A[i],A[p]]=[A[p],A[i]];const pv=A[i][i];for(let j=0;j<2*n;j++)A[i][j]/=pv;for(let r=0;r<n;r++)if(r!==i){const f=A[r][i];for(let j=0;j<2*n;j++)A[r][j]-=f*A[i][j];}}return A.map(r=>r.slice(n));}
+const matT=A=>A[0].map((_,j)=>A.map(r=>r[j]));
+const matMul=(A,B)=>A.map(r=>B[0].map((_,j)=>r.reduce((s,_,k)=>s+r[k]*B[k][j],0)));
+function ols(X,y){const Xt=matT(X),XtXi=inv(matMul(Xt,X)),beta=matMul(XtXi,matMul(Xt,y.map(v=>[v]))).map(r=>r[0]);const yhat=X.map(r=>r.reduce((s,v,j)=>s+v*beta[j],0));const yb=mean(y),sst=y.reduce((s,v)=>s+(v-yb)**2,0),sse=y.reduce((s,v,i)=>s+(v-yhat[i])**2,0);const n=X.length,k=X[0].length-1,df=n-k-1,sig=sse/df;const se=beta.map((_,j)=>Math.sqrt(sig*XtXi[j][j]));const t=beta.map((b,j)=>b/se[j]),p=t.map(v=>tP(v,df));const r2=1-sse/sst,adj=1-(1-r2)*(n-1)/df,F=(r2/k)/((1-r2)/df);return{beta,se,t,p,r2,adj,F,fp:fP(F,k,df),df,yhat};}
+function pearson(xs,ys){const n=xs.length,mx=mean(xs),my=mean(ys);let sxy=0,sxx=0,syy=0;for(let i=0;i<n;i++){sxy+=(xs[i]-mx)*(ys[i]-my);sxx+=(xs[i]-mx)**2;syy+=(ys[i]-my)**2;}const r=sxy/Math.sqrt(sxx*syy);const df=n-2,t=r*Math.sqrt(df/(1-r*r)),p=tP(t,df);return{r,p,n,slope:sxy/sxx,intercept:my-(sxy/sxx)*mx};}
+function star(p){return p<.001?'<span class="sig s3">***</span>':p<.01?'<span class="sig s2">**</span>':p<.05?'<span class="sig s1">*</span>':'<span class="sig s0">n.s.</span>';}
+const fmt=(x,d=3)=>(x>=0?'':'−')+Math.abs(x).toFixed(d);
+
+/* standardize regression sample within common countries */
+const REGZ=(()=>{const keys=['PDI','IDV','MAS','UAI','LTO','IVR','ladder'];const st={};keys.forEach(k=>{const a=REG.map(d=>d[k]);st[k]={m:mean(a),s:sd(a)};});return REG.map(d=>{const o={...d};keys.forEach(k=>o['_z'+k]=(d[k]-st[k].m)/st[k].s);return o;});})();
+$('#nreg').textContent=REG.length;
+
+/* ===================== 04 CORRELATION ===================== */
+const DK=DIMS.map(d=>d.k);
+function pairs(a,b){const xs=[],ys=[],names=[];DASH.forEach(d=>{if(d[a]!=null&&d[b]!=null){xs.push(d[a]);ys.push(d[b]);names.push(nm(d));}});return{xs,ys,names};}
+function lerp(a,b,t){return a+(b-a)*t;}
+function corrColor(r){ // blue positive, red negative
+  const m=Math.min(Math.abs(r),1);
+  if(r>=0){const R=lerp(255,44,m),G=lerp(255,110,m),B=lerp(255,158,m);return `rgb(${R|0},${G|0},${B|0})`;}
+  else{const R=lerp(255,181,m),G=lerp(255,73,m),B=lerp(255,91,m);return `rgb(${R|0},${G|0},${B|0})`;}
+}
+function drawCmx(){
+  let h='<tr><th></th>'+DK.map(k=>`<th style="color:${CMAP[k]}">${k}</th>`).join('')+'</tr>';
+  DK.forEach(a=>{h+=`<tr><th style="color:${CMAP[a]}">${a}</th>`;
+    DK.forEach(b=>{
+      if(a===b){h+=`<td class="cell diag">1.00</td>`;return;}
+      const {xs,ys}=pairs(a,b),pr=pearson(xs,ys);
+      const dark=Math.abs(pr.r)>0.55, col=dark?'#fff':'var(--ink)';
+      h+=`<td class="cell" style="background:${corrColor(pr.r)};color:${col}" data-x="${a}" data-y="${b}">
+        ${pr.r.toFixed(2)}<small style="color:${col}">${star(pr.p).replace(/<[^>]+>/g,'').trim()||'n.s.'}</small></td>`;
+    });h+='</tr>';});
+  $('#cmx').innerHTML=h;
+  document.querySelectorAll('#cmx .cell[data-x]').forEach(c=>c.onclick=()=>{$('#cx').value=c.dataset.x;$('#cy').value=c.dataset.y;drawCorrScatter();});
+}
+$('#cx').innerHTML=DIMS.map(d=>`<option value="${d.k}">${d.k} · ${d.jp}</option>`).join('');
+$('#cy').innerHTML=DIMS.map(d=>`<option value="${d.k}">${d.k} · ${d.jp}</option>`).join('');
+$('#cx').value='IDV';$('#cy').value='IVR';
+function scatterSVG(xs,ys,names,xk,yk,opt){
+  const W=440,H=380,P=52;const xmin=opt.xmin,xmax=opt.xmax,ymin=opt.ymin,ymax=opt.ymax;
+  const sx=v=>P+(v-xmin)/(xmax-xmin)*(W-P-18), sy=v=>H-P-(v-ymin)/(ymax-ymin)*(H-P-18);
+  let g=`<rect x="${P}" y="18" width="${W-P-18}" height="${H-P-18}" fill="var(--soft)" stroke="var(--line)"/>`;
+  // gridlines
+  for(let i=0;i<=4;i++){const gx=lerp(xmin,xmax,i/4),gy=lerp(ymin,ymax,i/4);
+    g+=`<line x1="${sx(gx)}" y1="18" x2="${sx(gx)}" y2="${H-P}" stroke="var(--line)"/>
+        <line x1="${P}" y1="${sy(gy)}" x2="${W-18}" y2="${sy(gy)}" stroke="var(--line)"/>
+        <text x="${sx(gx)}" y="${H-P+16}" text-anchor="middle" font-size="10" fill="var(--ink2)">${gx.toFixed(opt.dec||0)}</text>
+        <text x="${P-8}" y="${sy(gy)+3}" text-anchor="end" font-size="10" fill="var(--ink2)">${gy.toFixed(opt.dec||0)}</text>`;}
+  // regression / reference line
+  if(opt.line){const[x1,y1,x2,y2]=opt.line;g+=`<line x1="${sx(x1)}" y1="${sy(y1)}" x2="${sx(x2)}" y2="${sy(y2)}" stroke="${opt.lineColor||'var(--ink)'}" stroke-width="2" ${opt.dash?'stroke-dasharray="5 4"':''} opacity="0.8"/>`;}
+  xs.forEach((x,i)=>{g+=`<circle cx="${sx(x)}" cy="${sy(ys[i])}" r="4.5" fill="${opt.dot||'var(--idv)'}" fill-opacity="0.7" stroke="#fff" stroke-width="0.7"><title>${names[i]} (${x}${opt.unit||''}, ${ys[i]}${opt.unit||''})</title></circle>`;});
+  g+=`<text x="${(W-P)/2+P}" y="${H-8}" text-anchor="middle" font-size="12" font-weight="700" fill="${opt.xc||'var(--ink)'}">${xk}</text>
+      <text x="14" y="${(H-P)/2+18}" text-anchor="middle" font-size="12" font-weight="700" fill="${opt.yc||'var(--ink)'}" transform="rotate(-90 14 ${(H-P)/2+18})">${yk}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}">${g}</svg>`;
+}
+function drawCorrScatter(){
+  const a=$('#cx').value,b=$('#cy').value;const{xs,ys,names}=pairs(a,b);
+  if(a===b){$('#corrscatter').innerHTML='<div class="note" style="margin:20px 0">x軸とy軸に異なる文化側面を選んでください。</div>';$('#corrcap').textContent='';return;}
+  const pr=pearson(xs,ys);
+  const da=DIMS.find(d=>d.k===a),db=DIMS.find(d=>d.k===b);
+  const lx1=0,lx2=100,ly1=pr.intercept+pr.slope*0,ly2=pr.intercept+pr.slope*100;
+  $('#corrscatter').innerHTML=scatterSVG(xs,ys,names,`${a} ${da.jp}`,`${b} ${db.jp}`,
+    {xmin:0,xmax:100,ymin:0,ymax:100,line:[lx1,ly1,lx2,ly2],lineColor:CMAP[a],dot:'#48506B',unit:'',xc:CMAP[a],yc:CMAP[b]});
+  $('#corrcap').innerHTML=`N=${pr.n}カ国　｜　ピアソン r = <b style="color:${pr.r>=0?'var(--good)':'var(--bad)'}">${pr.r.toFixed(3)}</b> ${star(pr.p)}　｜　r² = ${(pr.r*pr.r).toFixed(3)}`;
+}
+$('#cx').onchange=drawCorrScatter;$('#cy').onchange=drawCorrScatter;
+drawCmx();drawCorrScatter();
+
+/* ===================== 05 REGRESSION ===================== */
+const selDims={PDI:true,IDV:true,MAS:true,UAI:true,LTO:true,IVR:true};
+$('#regchecks').innerHTML=DIMS.map(d=>`<label class="chk" data-k="${d.k}"><input type="checkbox" checked><i class="dot" style="background:${d.c}"></i>${d.k} ${d.jp}</label>`).join('');
+document.querySelectorAll('#regchecks .chk').forEach(el=>{const k=el.dataset.k,cb=el.querySelector('input');
+  cb.onchange=()=>{selDims[k]=cb.checked;el.classList.toggle('off',!cb.checked);runReg();};});
+function vif(cols){const out={};cols.forEach(tg=>{const o=cols.filter(c=>c!==tg);if(!o.length){out[tg]=1;return;}const y=REGZ.map(d=>d['_z'+tg]),X=REGZ.map(d=>[1,...o.map(c=>d['_z'+c])]);out[tg]=1/(1-ols(X,y).r2);});return out;}
+function runReg(){
+  const cols=DK.filter(k=>selDims[k]);
+  if(!cols.length){$('#regstats').innerHTML='<div class="stat"><div class="k">注意</div><div class="v" style="font-size:16px">独立変数を1つ以上選択してください</div></div>';['#regtable','#coefchart','#regscatter','#regnote'].forEach(s=>$(s).innerHTML='');$('#regscattercap').textContent='';return;}
+  const y=REGZ.map(d=>d._zladder),X=REGZ.map(d=>[1,...cols.map(c=>d['_z'+c])]);
+  const r=ols(X,y),vifs=vif(cols);
+  $('#regstats').innerHTML=`
+    <div class="stat"><div class="k">標本数 N</div><div class="v">${r.df+cols.length+1}<small> カ国</small></div></div>
+    <div class="stat"><div class="k">自由度調整済 R²</div><div class="v">${r.adj.toFixed(3)}</div></div>
+    <div class="stat"><div class="k">決定係数 R²</div><div class="v">${r.r2.toFixed(3)}</div></div>
+    <div class="stat"><div class="k">F 値（${cols.length}, ${r.df}）</div><div class="v">${r.F.toFixed(2)}</div></div>
+    <div class="stat"><div class="k">モデル p 値</div><div class="v" style="font-size:22px">${r.fp<.001?'< .001':r.fp.toFixed(3)}</div></div>`;
+  let rows=`<tr><th>独立変数</th><th>β</th><th>SE</th><th>t</th><th>p</th><th>VIF</th></tr>`;
+  cols.forEach((c,i)=>{const b=r.beta[i+1],p=r.p[i+1],vv=vifs[c],cls=p>=.05?'nsv':(b>0?'posv':'negv');
+    rows+=`<tr><td class="cty"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${CMAP[c]};margin-right:7px"></span>${c} ${DIMS.find(d=>d.k===c).jp}</td>
+      <td class="${cls}">${fmt(b)}</td><td>${r.se[i+1].toFixed(3)}</td><td>${fmt(r.t[i+1],2)}</td>
+      <td>${p<.001?'<.001':p.toFixed(3)} ${star(p)}</td><td class="${vv>3?'vifwarn':''}">${vv.toFixed(2)}</td></tr>`;});
+  rows+=`<tr><td class="cty" style="color:var(--ink2)">（切片）</td><td>${fmt(r.beta[0])}</td><td>${r.se[0].toFixed(3)}</td><td>${fmt(r.t[0],2)}</td><td>${r.p[0]<.001?'<.001':r.p[0].toFixed(3)}</td><td>—</td></tr>`;
+  $('#regtable').innerHTML=rows;
+  // coef chart
+  const bmax=Math.max(...cols.map((c,i)=>Math.abs(r.beta[i+1])+1.96*r.se[i+1]),0.4),sc=v=>50+v/bmax*48;
+  $('#coefchart').innerHTML=cols.map((c,i)=>{const b=r.beta[i+1],se=r.se[i+1],lo=b-1.96*se,hi=b+1.96*se,p=r.p[i+1];
+    const col=p>=.05?'#9a9384':(b>0?'var(--good)':'var(--bad)'),x0=sc(Math.min(0,b)),x1=sc(Math.max(0,b)),cl=sc(lo),ch=sc(hi);
+    return `<div class="coefrow"><div class="cn" style="color:${CMAP[c]}">${c}</div>
+     <div class="coefbar"><div class="zero"></div><div class="ci" style="left:${cl}%;width:${ch-cl}%"></div>
+       <div class="seg" style="left:${x0}%;width:${Math.max(x1-x0,0.6)}%;background:${col}"></div>
+       <div class="tag" style="${b>=0?`left:${ch}%;margin-left:6px`:`right:${100-cl}%;margin-right:6px`};color:${col}">${fmt(b)}</div></div></div>`;}).join('');
+  // observed vs predicted scatter
+  const yhat=r.yhat,obs=y,names=REGZ.map(d=>nm(d));
+  const allv=[...yhat,...obs],lo=Math.min(...allv)-0.3,hi=Math.max(...allv)+0.3;
+  $('#regscatter').innerHTML=scatterSVG(yhat,obs,names,'予測値（標準化）','観測値（標準化）',
+    {xmin:lo,xmax:hi,ymin:lo,ymax:hi,dec:1,line:[lo,lo,hi,hi],lineColor:'var(--ink2)',dash:true,dot:'#2C5F2D'});
+  $('#regscattercap').innerHTML=`N=${obs.length}　｜　予測と観測の相関 r = <b>${pearson(yhat,obs).r.toFixed(3)}</b>（= √R²）。点が点線に近いほど予測精度が高い。`;
+  // note
+  const sp=cols.filter((c,i)=>r.p[i+1]<.05&&r.beta[i+1]>0),sn=cols.filter((c,i)=>r.p[i+1]<.05&&r.beta[i+1]<0);
+  $('#regnote').innerHTML=`<b>読み方：</b>β は共通${obs.length}カ国内で標準化した標準化偏回帰係数。
+   このモデルは幸福度の分散の <b>${(r.r2*100).toFixed(1)}%</b>（自由度調整済 ${(r.adj*100).toFixed(1)}%）を説明します。
+   ${sp.length?`<b>正の有意な寄与</b>：${sp.join('・')}。`:''}${sn.length?`<b>負の有意な寄与</b>：${sn.join('・')}。`:''}
+   VIFは${Math.max(...cols.map(c=>vifs[c]))<3?'すべて3未満で多重共線性の問題は小さい':'一部3を超えており多重共線性に注意'}。
+   標準化は<b>選択した変数によらず共通国全体</b>で固定して行うため、変数の出し入れで各国のz得点は変化しません。`;
+}
+runReg();
+
+/* ===================== 06 DATA ===================== */
+let sortKey='ladder',sortDir=-1;
+function drawData(){
+  const cols=[['country','国'],['PDI','PDI'],['IDV','IDV'],['MAS','MAS'],['UAI','UAI'],['LTO','LTO'],['IVR','IVR'],['ladder','幸福度']];
+  const rows=[...DASH].sort((a,b)=>{let x=a[sortKey],y=b[sortKey];if(sortKey==='country'){return sortDir*nm(a).localeCompare(nm(b),'ja');}if(x==null)return 1;if(y==null)return -1;return sortDir*(x-y);});
+  let h='<tr>'+cols.map(c=>`<th data-k="${c[0]}">${c[1]}${sortKey===c[0]?(sortDir<0?' ▼':' ▲'):''}</th>`).join('')+'</tr>';
+  h+=rows.map(r=>'<tr>'+cols.map(c=>c[0]==='country'?`<td class="cty">${nm(r)}</td>`:`<td>${r[c[0]]==null?'<span class="miss">—</span>':(c[0]==='ladder'?r[c[0]].toFixed(2):r[c[0]])}</td>`).join('')+'</tr>').join('');
+  $('#datatable').innerHTML=h;
+  document.querySelectorAll('#datatable th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(k===sortKey)sortDir*=-1;else{sortKey=k;sortDir=k==='country'?1:-1;}drawData();});
+}
+drawData();
+</script>
+</body>
+</html>
